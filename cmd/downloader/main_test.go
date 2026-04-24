@@ -93,20 +93,20 @@ func TestGetGribFileURL(t *testing.T) {
 	modelsAvail := models.Available{
 		Models: map[string]models.ModelConfig{
 			"cosmo-d2": {
-				Model:                     "cosmo-d2",
-				Scope:                     "germany",
-				IntervalHours:             3,
-				Grids:                     []string{"regular-lat-lon", "rotated-lat-lon"},
+				Model:                         "cosmo-d2",
+				Scope:                         "germany",
+				IntervalHours:                 3,
+				Grids:                         []string{"regular-lat-lon", "rotated-lat-lon"},
 				OpenDataDeliveryOffsetMinutes: 90,
 				Pattern: models.Pattern{
 					SingleLevel: "https://opendata.dwd.de/weather/nwp/{model!L}/grib/{modelrun:>02d}/{param!L}/{model!L}_{scope}_{grid}_{levtype}_{timestamp:%Y%m%d}{modelrun:>02d}_{step:>03d}_{param!U}.grib2.bz2",
 				},
 			},
 			"icon": {
-				Model:                     "icon",
-				Scope:                     "global",
-				IntervalHours:             6,
-				Grids:                     []string{"icosahedral"},
+				Model:                         "icon",
+				Scope:                         "global",
+				IntervalHours:                 6,
+				Grids:                         []string{"icosahedral"},
 				OpenDataDeliveryOffsetMinutes: 240,
 				Pattern: models.Pattern{
 					SingleLevel: "https://opendata.dwd.de/weather/nwp/{model!L}/grib/{modelrun:>02d}/{param!L}/{model!L}_{scope}_{grid}_{levtype}_{timestamp:%Y%m%d}{modelrun:>02d}_{step:>03d}_{param!U}.grib2.bz2",
@@ -114,74 +114,74 @@ func TestGetGribFileURL(t *testing.T) {
 			},
 		},
 		Grids: map[string]string{
-			"regular-lat-lon":  "regular-lat-lon",
-			"rotated-lat-lon":  "rotated-lat-lon",
-			"icosahedral":      "icosahedral",
+			"regular-lat-lon": "regular-lat-lon",
+			"rotated-lat-lon": "rotated-lat-lon",
+			"icosahedral":     "icosahedral",
 		},
 	}
 
 	tests := []struct {
-		name     string
-		model    string
-		grid     string
-		param    string
-		timestep int
+		name      string
+		model     string
+		grid      string
+		param     string
+		timestep  int
 		timestamp time.Time
-		expected string
+		expected  string
 	}{
 		{
-			name:     "cosmo-d2 with all params",
-			model:    "cosmo-d2",
-			grid:     "regular-lat-lon",
-			param:    "t_2m",
-			timestep: 0,
+			name:      "cosmo-d2 with all params",
+			model:     "cosmo-d2",
+			grid:      "regular-lat-lon",
+			param:     "t_2m",
+			timestep:  0,
 			timestamp: time.Date(2024, 1, 15, 12, 0, 0, 0, time.UTC),
-			expected: "https://opendata.dwd.de/weather/nwp/cosmo-d2/grib/12/t_2m/cosmo-d2_germany_regular-lat-lon_single-level_2024011512_000_T_2M.grib2.bz2",
+			expected:  "https://opendata.dwd.de/weather/nwp/cosmo-d2/grib/12/t_2m/cosmo-d2_germany_regular-lat-lon_single-level_2024011512_000_T_2M.grib2.bz2",
 		},
 		{
-			name:     "cosmo-d2 with rotated grid",
-			model:    "cosmo-d2",
-			grid:     "rotated-lat-lon",
-			param:    "clch",
-			timestep: 24,
+			name:      "cosmo-d2 with rotated grid",
+			model:     "cosmo-d2",
+			grid:      "rotated-lat-lon",
+			param:     "clch",
+			timestep:  24,
 			timestamp: time.Date(2024, 1, 15, 12, 0, 0, 0, time.UTC),
-			expected: "https://opendata.dwd.de/weather/nwp/cosmo-d2/grib/12/clch/cosmo-d2_germany_rotated-lat-lon_single-level_2024011512_024_CLCH.grib2.bz2",
+			expected:  "https://opendata.dwd.de/weather/nwp/cosmo-d2/grib/12/clch/cosmo-d2_germany_rotated-lat-lon_single-level_2024011512_024_CLCH.grib2.bz2",
 		},
 		{
-			name:     "icon model",
-			model:    "icon",
-			grid:     "icosahedral",
-			param:    "t_2m",
-			timestep: 48,
+			name:      "icon model",
+			model:     "icon",
+			grid:      "icosahedral",
+			param:     "t_2m",
+			timestep:  48,
 			timestamp: time.Date(2024, 1, 15, 6, 0, 0, 0, time.UTC),
-			expected: "https://opendata.dwd.de/weather/nwp/icon/grib/06/t_2m/icon_global_icosahedral_single-level_2024011506_048_T_2M.grib2.bz2",
+			expected:  "https://opendata.dwd.de/weather/nwp/icon/grib/06/t_2m/icon_global_icosahedral_single-level_2024011506_048_T_2M.grib2.bz2",
 		},
 		{
-			name:     "cosmo-d2 with default grid",
-			model:    "cosmo-d2",
-			grid:     "", // Should use default
-			param:    "pmsl",
-			timestep: 0,
+			name:      "cosmo-d2 with default grid",
+			model:     "cosmo-d2",
+			grid:      "", // Should use default
+			param:     "pmsl",
+			timestep:  0,
 			timestamp: time.Date(2024, 1, 15, 12, 0, 0, 0, time.UTC),
-			expected: "https://opendata.dwd.de/weather/nwp/cosmo-d2/grib/12/pmsl/cosmo-d2_germany_regular-lat-lon_single-level_2024011512_000_PMSL.grib2.bz2",
+			expected:  "https://opendata.dwd.de/weather/nwp/cosmo-d2/grib/12/pmsl/cosmo-d2_germany_regular-lat-lon_single-level_2024011512_000_PMSL.grib2.bz2",
 		},
 		{
-			name:     "uppercase param",
-			model:    "cosmo-d2",
-			grid:     "regular-lat-lon",
-			param:    "T_2M",
-			timestep: 3,
+			name:      "uppercase param",
+			model:     "cosmo-d2",
+			grid:      "regular-lat-lon",
+			param:     "T_2M",
+			timestep:  3,
 			timestamp: time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC),
-			expected: "https://opendata.dwd.de/weather/nwp/cosmo-d2/grib/00/t_2m/cosmo-d2_germany_regular-lat-lon_single-level_2024011500_003_T_2M.grib2.bz2",
+			expected:  "https://opendata.dwd.de/weather/nwp/cosmo-d2/grib/00/t_2m/cosmo-d2_germany_regular-lat-lon_single-level_2024011500_003_T_2M.grib2.bz2",
 		},
 		{
-			name:     "large timestep",
-			model:    "cosmo-d2",
-			grid:     "regular-lat-lon",
-			param:    "t_2m",
-			timestep: 72,
+			name:      "large timestep",
+			model:     "cosmo-d2",
+			grid:      "regular-lat-lon",
+			param:     "t_2m",
+			timestep:  72,
 			timestamp: time.Date(2024, 1, 15, 12, 0, 0, 0, time.UTC),
-			expected: "https://opendata.dwd.de/weather/nwp/cosmo-d2/grib/12/t_2m/cosmo-d2_germany_regular-lat-lon_single-level_2024011512_072_T_2M.grib2.bz2",
+			expected:  "https://opendata.dwd.de/weather/nwp/cosmo-d2/grib/12/t_2m/cosmo-d2_germany_regular-lat-lon_single-level_2024011512_072_T_2M.grib2.bz2",
 		},
 	}
 
@@ -195,5 +195,3 @@ func TestGetGribFileURL(t *testing.T) {
 		})
 	}
 }
-
-

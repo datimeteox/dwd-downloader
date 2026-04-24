@@ -7,7 +7,7 @@ import (
 
 func TestFormatString(t *testing.T) {
 	f := &ExtendedFormatter{}
-	
+
 	tests := []struct {
 		name     string
 		format   string
@@ -124,7 +124,7 @@ func TestFormatString(t *testing.T) {
 
 func TestFormat(t *testing.T) {
 	f := &ExtendedFormatter{}
-	
+
 	tests := []struct {
 		name     string
 		format   string
@@ -171,7 +171,7 @@ func TestFormat(t *testing.T) {
 
 func TestFormatStringEdgeCases(t *testing.T) {
 	f := &ExtendedFormatter{}
-	
+
 	tests := []struct {
 		name     string
 		testFunc func(*testing.T)
