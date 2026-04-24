@@ -1,0 +1,55 @@
+name: Build and Test
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+          cache: true
+          cache-dependency-path: 'go.sum'
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Tidy go.mod
+        run: go mod tidy
+
+      - name: Build
+        run: go build -v -o downloader ./cmd/downloader
+
+      - name: Run go vet
+        run: go vet ./...
+
+      - name: Run tests
+        run: go test -v -race ./...
+
+      - name: Format check
+        run: |
+          if [ "$(gofmt -l . | wc -l)" -ne 0 ]; then
+            echo "Code is not formatted. Please run 'gofmt -w .'"
+            gofmt -l .
+            exit 1
+          fi
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: downloader-linux-amd64
+          path: downloader
+          retention-days: 7
