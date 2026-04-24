@@ -108,12 +108,3 @@ go/
 ├── go.mod            # Go module definition
 └── go.sum            # Go module checksums
 ```
-
-## License
-
-This project is licensed under the Apache License Version 2.0 - see the [Python version's LICENSE](https://github.com/deutscherwetterdienst/opendata-downloader/blob/master/LICENSE) file for details.
-
-## Acknowledgments
-
-- Original Python implementation by Deutscher Wetterdienst (DWD)
-- Uses Go standard library for bzip2 compression
