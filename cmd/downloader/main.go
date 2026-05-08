@@ -86,7 +86,7 @@ func getGribFileURL(model, grid, param string, timestep int, timestamp time.Time
 	return url
 }
 
-func downloadAndExtractBz2FileFromURL(url, destFilePath, destFileName string) error {
+func downloadAndExtractBz2FileFromURL(url, destFilePath, destFileName, field string) error {
 	logger.Logger.Printf("downloading file: '%s'", url)
 
 	if destFileName == "" {
@@ -99,10 +99,18 @@ func downloadAndExtractBz2FileFromURL(url, destFilePath, destFileName string) er
 		destFilePath = "."
 	}
 
+	// Create field-specific subdirectory path
+	fieldDestPath := filepath.Join(destFilePath, field)
+
 	// Validate destination path to prevent path traversal
-	absDest, err := filepath.Abs(destFilePath)
+	absDest, err := filepath.Abs(fieldDestPath)
 	if err != nil {
 		return fmt.Errorf("invalid destination path: %v", err)
+	}
+
+	// Create the field subdirectory if it doesn't exist
+	if err := os.MkdirAll(absDest, 0755); err != nil {
+		return fmt.Errorf("failed to create directory: %v", err)
 	}
 
 	// Create HTTP client with timeout
@@ -168,12 +176,16 @@ func downloadGribData(model, grid, param string, minTimeStep, maxTimeStep, timeS
 			go func(ts int, f string) {
 				defer wg.Done()
 
+				// Sanitize field name for filesystem safety
+				sanitizedField := strings.ReplaceAll(f, "/", "_")
+				sanitizedField = strings.ReplaceAll(sanitizedField, "\\", "_")
+
 				// Acquire semaphore
 				sem <- struct{}{}
 				defer func() { <-sem }()
 
 				url := getGribFileURL(model, grid, f, ts, timestamp, models)
-				if err := downloadAndExtractBz2FileFromURL(url, destFilePath, ""); err != nil {
+				if err := downloadAndExtractBz2FileFromURL(url, destFilePath, "", sanitizedField); err != nil {
 					mu.Lock()
 					errors = append(errors, fmt.Sprintf("%s: %v", url, err))
 					mu.Unlock()
