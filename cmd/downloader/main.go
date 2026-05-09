@@ -86,7 +86,7 @@ func getGribFileURL(model, grid, param string, timestep int, timestamp time.Time
 	return url
 }
 
-func downloadAndExtractBz2FileFromURL(url, destFilePath, destFileName, field string, unarchive bool) error {
+func downloadGribFile(url, destFilePath, destFileName, field string, unarchive bool) error {
 	logger.Logger.Printf("downloading file: '%s'", url)
 
 	if destFileName == "" {
@@ -142,8 +142,8 @@ func downloadAndExtractBz2FileFromURL(url, destFilePath, destFileName, field str
 	defer outFile.Close()
 
 	if unarchive {
-		binaryData := bzip2.NewReader(bytes.NewReader(compressedData))
-		if _, err := io.Copy(outFile, binaryData); err != nil {
+		bzipReader := bzip2.NewReader(bytes.NewReader(compressedData))
+		if _, err := io.Copy(outFile, bzipReader); err != nil {
 			return fmt.Errorf("failed to write file: %v", err)
 		}
 	} else {
@@ -193,7 +193,7 @@ func downloadGribData(model, grid, param string, minTimeStep, maxTimeStep, timeS
 				defer func() { <-sem }()
 
 				url := getGribFileURL(model, grid, f, ts, timestamp, models)
-				if err := downloadAndExtractBz2FileFromURL(url, destFilePath, "", sanitizedField, unarchive); err != nil {
+				if err := downloadGribFile(url, destFilePath, "", sanitizedField, unarchive); err != nil {
 					mu.Lock()
 					errors = append(errors, fmt.Sprintf("%s: %v", url, err))
 					mu.Unlock()
@@ -277,6 +277,11 @@ func main() {
 				Usage: "unarchive the downloaded bzipped files (default: false)",
 				Value: false,
 			},
+			&cli.StringFlag{
+				Name:  "timezone",
+				Usage: "timezone for timestamp calculation (e.g., 'Europe/Rome'). Uses UTC if not specified.",
+				Value: "",
+			},
 		},
 		Action: func(c *cli.Context) error {
 			model := c.String("model")
@@ -289,6 +294,7 @@ func main() {
 			directory := c.String("directory")
 			parallel := c.Int("parallel")
 			unarchive := c.Bool("unarchive")
+			timezone := c.String("timezone")
 
 			if directory == "" {
 				directory = "."
@@ -332,7 +338,7 @@ func main() {
 				if !ok {
 					return fmt.Errorf("unknown model: %s", model)
 				}
-				timestamp = models.GetMostRecentModelTimestamp(modelCfg)
+				timestamp = models.GetMostRecentModelTimestamp(modelCfg, timezone)
 			}
 
 			if grid == "" {

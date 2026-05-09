@@ -81,6 +81,18 @@ Use `--unarchive` to automatically decompress the bzipped files:
   --directory /path/to/output
 ```
 
+### Use custom timezone
+
+Use a specific timezone for timestamp calculations (e.g., for local time-based model runs):
+
+```bash
+./downloader \
+  --model icon-eu \
+  --single-level-fields t_2m \
+  --timezone Europe/Rome \
+  --directory /path/to/output
+```
+
 ### Options
 
 | Option | Description | Default |
@@ -95,6 +107,7 @@ Use `--unarchive` to automatically decompress the bzipped files:
 | `--directory` | Download directory | Current directory |
 | `--parallel` | Number of parallel downloads | 1 (sequential) |
 | `--unarchive` | Unarchive the downloaded bzipped files | false (keep compressed) |
+| `--timezone` | Timezone for timestamp calculation (e.g., 'Europe/Rome'). Uses UTC if not specified. | UTC |
 
 ## Differences from Python Version
 
@@ -106,6 +119,7 @@ Use `--unarchive` to automatically decompress the bzipped files:
 6. **Timestamp Parsing**: Supports multiple timestamp formats including RFC3339
 7. **HTTP Timeout**: Configurable HTTP client timeout (30 seconds)
 8. **File Compression**: Optional BZ2 decompression via `--unarchive` flag (default: keep files as .bz2)
+9. **Timezone Support**: Configurable timezone for timestamp calculations via `--timezone` flag (default: UTC)
 
 ## Project Structure
 
