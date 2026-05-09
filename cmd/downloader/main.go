@@ -86,13 +86,15 @@ func getGribFileURL(model, grid, param string, timestep int, timestamp time.Time
 	return url
 }
 
-func downloadAndExtractBz2FileFromURL(url, destFilePath, destFileName, field string) error {
+func downloadAndExtractBz2FileFromURL(url, destFilePath, destFileName, field string, unarchive bool) error {
 	logger.Logger.Printf("downloading file: '%s'", url)
 
 	if destFileName == "" {
 		parts := strings.Split(url, "/")
 		destFileName = parts[len(parts)-1]
-		destFileName = strings.TrimSuffix(destFileName, ".bz2")
+		if unarchive {
+			destFileName = strings.TrimSuffix(destFileName, ".bz2")
+		}
 	}
 
 	if destFilePath == "" {
@@ -130,7 +132,6 @@ func downloadAndExtractBz2FileFromURL(url, destFilePath, destFileName, field str
 		return fmt.Errorf("failed to read response body: %v", err)
 	}
 
-	binaryData := bzip2.NewReader(bytes.NewReader(compressedData))
 	fullFilePath := filepath.Join(absDest, destFileName)
 	logger.Logger.Printf("saving file as: '%s'", fullFilePath)
 
@@ -140,15 +141,22 @@ func downloadAndExtractBz2FileFromURL(url, destFilePath, destFileName, field str
 	}
 	defer outFile.Close()
 
-	if _, err := io.Copy(outFile, binaryData); err != nil {
-		return fmt.Errorf("failed to write file: %v", err)
+	if unarchive {
+		binaryData := bzip2.NewReader(bytes.NewReader(compressedData))
+		if _, err := io.Copy(outFile, binaryData); err != nil {
+			return fmt.Errorf("failed to write file: %v", err)
+		}
+	} else {
+		if _, err := outFile.Write(compressedData); err != nil {
+			return fmt.Errorf("failed to write file: %v", err)
+		}
 	}
 
 	logger.Logger.Println("Done.")
 	return nil
 }
 
-func downloadGribData(model, grid, param string, minTimeStep, maxTimeStep, timeStepInterval int, timestamp time.Time, destFilePath string, models models.Available, parallel int) error {
+func downloadGribData(model, grid, param string, minTimeStep, maxTimeStep, timeStepInterval int, timestamp time.Time, destFilePath string, models models.Available, parallel int, unarchive bool) error {
 	fields := strings.Split(param, ",")
 
 	// Ensure at least 1 parallel
@@ -185,7 +193,7 @@ func downloadGribData(model, grid, param string, minTimeStep, maxTimeStep, timeS
 				defer func() { <-sem }()
 
 				url := getGribFileURL(model, grid, f, ts, timestamp, models)
-				if err := downloadAndExtractBz2FileFromURL(url, destFilePath, "", sanitizedField); err != nil {
+				if err := downloadAndExtractBz2FileFromURL(url, destFilePath, "", sanitizedField, unarchive); err != nil {
 					mu.Lock()
 					errors = append(errors, fmt.Sprintf("%s: %v", url, err))
 					mu.Unlock()
@@ -264,6 +272,11 @@ func main() {
 				Usage: "number of parallel downloads (default=1, use >1 to enable concurrent downloads)",
 				Value: 1,
 			},
+			&cli.BoolFlag{
+				Name:  "unarchive",
+				Usage: "unarchive the downloaded bzipped files (default: false)",
+				Value: false,
+			},
 		},
 		Action: func(c *cli.Context) error {
 			model := c.String("model")
@@ -275,6 +288,7 @@ func main() {
 			timestampStr := c.String("timestamp")
 			directory := c.String("directory")
 			parallel := c.Int("parallel")
+			unarchive := c.Bool("unarchive")
 
 			if directory == "" {
 				directory = "."
@@ -354,7 +368,7 @@ Destination: %s
 				directory,
 			)
 
-			if err := downloadGribData(model, grid, fields, minTimeStep, maxTimeStep, timeStepInterval, timestamp, directory, modelsAvail, parallel); err != nil {
+			if err := downloadGribData(model, grid, fields, minTimeStep, maxTimeStep, timeStepInterval, timestamp, directory, modelsAvail, parallel, unarchive); err != nil {
 				return fmt.Errorf("download failed: %v", err)
 			}
 

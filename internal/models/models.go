@@ -25,7 +25,7 @@ type Available struct {
 
 // GetMostRecentTimestamp calculates the most recent timestamp for model data
 func GetMostRecentTimestamp(waitTimeMinutes int, modelIntervalHours int) time.Time {
-	now := time.Now()
+	now := time.Now().UTC()
 	waitDuration := time.Duration(waitTimeMinutes) * time.Minute
 	now = now.Add(-waitDuration)
 	latestAvailableUTCRun := int(now.Hour()/modelIntervalHours) * modelIntervalHours
