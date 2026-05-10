@@ -109,18 +109,6 @@ Use a specific timezone for timestamp calculations (e.g., for local time-based m
 | `--unarchive` | Unarchive the downloaded bzipped files | false (keep compressed) |
 | `--timezone` | Timezone for timestamp calculation (e.g., 'Europe/Rome'). Uses UTC if not specified. | UTC |
 
-## Differences from Python Version
-
-1. **CLI Framework**: Uses `urfave/cli/v2` instead of Python's `click`
-2. **String Formatting**: Custom formatter implementation for `{param!U}` and `{param!L}` syntax
-3. **Error Handling**: More explicit error handling and logging
-4. **Build Process**: Requires compilation before use
-5. **Parallel Downloads**: Supports concurrent downloads via `--parallel` flag (default=1 for sequential)
-6. **Timestamp Parsing**: Supports multiple timestamp formats including RFC3339
-7. **HTTP Timeout**: Configurable HTTP client timeout (30 seconds)
-8. **File Compression**: Optional BZ2 decompression via `--unarchive` flag (default: keep files as .bz2)
-9. **Timezone Support**: Configurable timezone for timestamp calculations via `--timezone` flag (default: UTC)
-
 ## Project Structure
 
 ```
