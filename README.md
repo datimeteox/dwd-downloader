@@ -8,7 +8,7 @@ This tool downloads NWP GRIB2 data from DWD's Open Data File Server (https://ope
 - Support for multiple models: cosmo-d2, cosmo-d2-eps, icon, icon-eps, icon-eu, icon-eu-eps, icon-d2, icon-d2-eps
 - Configurable time steps and intervals
 - Automatic timestamp detection
-- BZ2 decompression and file extraction
+- Optional BZ2 decompression via `--unarchive` flag (default: keep files compressed)
 - Parallel downloads with configurable concurrency
 - Support for multiple timestamp formats (RFC3339, YYYY-MM-DD HH:MM:SS, etc.)
 
@@ -23,7 +23,6 @@ This tool downloads NWP GRIB2 data from DWD's Open Data File Server (https://ope
 Using Makefile (recommended):
 
 ```bash
-cd go
 make build      # Build the binary to bin/ directory
 make install    # Install to $GOPATH/bin
 make release    # Build binaries for all platforms (linux, macOS, windows)
@@ -32,7 +31,6 @@ make release    # Build binaries for all platforms (linux, macOS, windows)
 Manual build:
 
 ```bash
-cd go
 go mod download
 go build -o downloader ./cmd/downloader
 ```
@@ -47,13 +45,28 @@ This will create a `downloader` binary in the current directory.
 ./downloader --help
 ```
 
-### Download data
+### Download data (compressed)
+
+By default, files are downloaded and kept as .bz2:
 
 ```bash
 ./downloader \
   --model icon-eu \
   --single-level-fields t_2m \
   --max-time-step 5 \
+  --directory /path/to/output
+```
+
+### Download and unarchive data
+
+Use `--unarchive` to automatically decompress the bzipped files:
+
+```bash
+./downloader \
+  --model icon-eu \
+  --single-level-fields t_2m \
+  --max-time-step 5 \
+  --unarchive \
   --directory /path/to/output
 ```
 
@@ -65,6 +78,18 @@ This will create a `downloader` binary in the current directory.
   --single-level-fields t_2m \
   --max-time-step 10 \
   --parallel 4 \
+  --directory /path/to/output
+```
+
+### Use custom timezone
+
+Use a specific timezone for timestamp calculations (e.g., for local time-based model runs):
+
+```bash
+./downloader \
+  --model icon-eu \
+  --single-level-fields t_2m \
+  --timezone Europe/Rome \
   --directory /path/to/output
 ```
 
@@ -81,6 +106,8 @@ This will create a `downloader` binary in the current directory.
 | `--timestamp` | Timestamp in format 'YYYY-MM-DD HH:MM:SS' or RFC3339 | Latest available |
 | `--directory` | Download directory | Current directory |
 | `--parallel` | Number of parallel downloads | 1 (sequential) |
+| `--unarchive` | Unarchive the downloaded bzipped files | false (keep compressed) |
+| `--timezone` | Timezone for timestamp calculation (e.g., 'Europe/Rome'). Uses UTC if not specified. | UTC |
 
 ## Differences from Python Version
 
@@ -91,20 +118,36 @@ This will create a `downloader` binary in the current directory.
 5. **Parallel Downloads**: Supports concurrent downloads via `--parallel` flag (default=1 for sequential)
 6. **Timestamp Parsing**: Supports multiple timestamp formats including RFC3339
 7. **HTTP Timeout**: Configurable HTTP client timeout (30 seconds)
+8. **File Compression**: Optional BZ2 decompression via `--unarchive` flag (default: keep files as .bz2)
+9. **Timezone Support**: Configurable timezone for timestamp calculations via `--timezone` flag (default: UTC)
 
 ## Project Structure
 
 ```
-go/
-├── Makefile          # Common build targets
-├── README.md         # This documentation
+.
+├── Makefile                    # Common build targets
+├── README.md                   # This documentation
+├── AGENTS.md                   # Agent instructions
+├── go.mod                      # Go module definition
+├── go.sum                      # Go module checksums
 ├── cmd/
-│   └── downloader/    # Main application entry point
+│   └── downloader/             # Main application entry point
+│       ├── main.go             # CLI entry point
+│       └── main_test.go        # Tests for main
 ├── internal/
-│   ├── formatter/     # Custom string formatter
-│   ├── logger/        # Logging utilities
-│   ├── models/        # Model configurations and JSON data
-│   └── version/       # Version information
-├── go.mod            # Go module definition
-└── go.sum            # Go module checksums
+│   ├── formatter/              # Custom string formatter
+│   │   ├── formatter.go        # String formatting utilities
+│   │   └── formatter_test.go   # Formatter tests
+│   ├── logger/                 # Logging utilities
+│   │   └── logger.go           # Logging utilities
+│   ├── models/                 # Model configurations and JSON data
+│   │   ├── models.go           # Model loading and timestamp logic
+│   │   ├── models_test.go      # Model tests
+│   │   └── models.json         # Model configurations
+│   └── version/                # Version information
+│       └── version.go          # Version string
+└── .github/
+    └── workflows/
+        ├── build-and-test.yml  # CI: build and test
+        └── release.yml          # CI: release workflow
 ```

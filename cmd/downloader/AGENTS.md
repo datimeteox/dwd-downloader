@@ -48,8 +48,8 @@ cmd/downloader/
 | Function | Purpose | Parameters |
 |----------|---------|------------|
 | `getGribFileURL(model, grid, param, timestep, timestamp, models) string` | Constructs download URL from pattern | Model config, timestamp |
-| `downloadAndExtractBz2FileFromURL(url, destPath, destName) error` | Downloads and extracts BZ2 file | URL, destination |
-| `downloadGribData(model, grid, param, minTS, maxTS, interval, timestamp, dest, models, parallel) error` | Coordinates parallel downloads | Download parameters |
+| `downloadGribFile(url, destPath, destName, field, unarchive) error` | Downloads GRIB file with optional BZ2 extraction | URL, destination, field, unarchive flag |
+| `downloadGribData(model, grid, param, minTS, maxTS, interval, timestamp, dest, models, parallel, unarchive) error` | Coordinates parallel downloads | Download parameters |
 | `loadModels() models.Available` | Loads model configs from JSON | None |
 | `formatDateIso8601(date) string` | Formats date for API | time.Time |
 | `getTimestampString(date) string` | Formats date + hour | time.Time |
@@ -63,7 +63,7 @@ cmd/downloader/
 | Adding new CLI flag | Follow existing pattern: flag definition + usage in Action |
 
 | Constructing URLs | Use pattern replacement from models.json |
-| Downloading files | Reuse `downloadAndExtractBz2FileFromURL` |
+| Downloading files | Reuse `downloadGribFile` |
 | Parallel operations | Use semaphore pattern (channel with capacity) |
 
 ---
@@ -96,7 +96,7 @@ cmd/downloader/
 - **Lines 1-25:** Imports (bytes, compress/bzip2, encoding/json, fmt, io, log, net/http, os, path/filepath, strings, sync, time, cli/v2, logger, models, version)
 - **Lines 27-48:** `loadModels()` - Loads and parses models.json
 - **Lines 50-87:** `getGribFileURL()` - URL construction with pattern replacement
-- **Lines 102-145:** `downloadAndExtractBz2FileFromURL()` - HTTP download + BZ2 extract
+- **Lines 102-145:** `downloadGribFile()` - HTTP download + conditional BZ2 extract
 - **Lines 147-210:** `downloadGribData()` - Parallel download coordination
 - **Lines 212-220:** Utility formatting functions
 - **Lines 222-360:** `main()` - CLI setup and Action handler

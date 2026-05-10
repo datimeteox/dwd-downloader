@@ -2,3 +2,9 @@ bin
 
 downloads/
 python/
+*.pyc
+
+downloader
+
+.kilo/
+docs

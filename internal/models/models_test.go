@@ -38,7 +38,7 @@ func TestGetMostRecentTimestamp(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := GetMostRecentTimestamp(tt.waitTimeMinutes, tt.modelIntervalHours)
+			result := GetMostRecentTimestamp(tt.waitTimeMinutes, tt.modelIntervalHours, "")
 
 			// The result hour should be divisible by modelIntervalHours
 			if result.Hour()%tt.modelIntervalHours != 0 {
@@ -100,7 +100,7 @@ func TestGetMostRecentModelTimestamp(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := GetMostRecentModelTimestamp(tt.model)
+			result := GetMostRecentModelTimestamp(tt.model, "")
 
 			// The result hour should be divisible by the model's interval
 			if result.Hour()%tt.model.IntervalHours != 0 {
@@ -199,6 +199,84 @@ func TestGetMostRecentTimestampWithFixedTime(t *testing.T) {
 
 			if !result.Equal(tt.expected) {
 				t.Errorf("getMostRecentTimestampWithFixedTime() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestGetMostRecentTimestampWithTimezone(t *testing.T) {
+	// Test timezone parameter functionality
+	tests := []struct {
+		name               string
+		waitTimeMinutes    int
+		modelIntervalHours int
+		timezone           string
+	}{
+		{
+			name:               "UTC timezone (default)",
+			waitTimeMinutes:    0,
+			modelIntervalHours: 3,
+			timezone:           "",
+		},
+		{
+			name:               "Europe/Rome timezone",
+			waitTimeMinutes:    0,
+			modelIntervalHours: 6,
+			timezone:           "Europe/Rome",
+		},
+		{
+			name:               "America/New_York timezone",
+			waitTimeMinutes:    0,
+			modelIntervalHours: 12,
+			timezone:           "America/New_York",
+		},
+		{
+			name:               "Invalid timezone falls back to UTC",
+			waitTimeMinutes:    0,
+			modelIntervalHours: 3,
+			timezone:           "Invalid/Timezone",
+		},
+		{
+			name:               "Asia/Tokyo timezone",
+			waitTimeMinutes:    120,
+			modelIntervalHours: 6,
+			timezone:           "Asia/Tokyo",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := GetMostRecentTimestamp(tt.waitTimeMinutes, tt.modelIntervalHours, tt.timezone)
+
+			// The result hour should be divisible by modelIntervalHours
+			if result.Hour()%tt.modelIntervalHours != 0 {
+				t.Errorf("result hour %d is not divisible by interval %d", result.Hour(), tt.modelIntervalHours)
+			}
+
+			// The result should have minute=0 and second=0
+			if result.Minute() != 0 || result.Second() != 0 {
+				t.Errorf("result should have minute=0 and second=0, got %02d:%02d", result.Minute(), result.Second())
+			}
+
+			// Verify timezone location
+			if tt.timezone != "" {
+				loc, err := time.LoadLocation(tt.timezone)
+				if err != nil {
+					// Invalid timezone should fall back to UTC
+					if result.Location().String() != time.UTC.String() {
+						t.Errorf("expected UTC fallback for invalid timezone, got %v", result.Location())
+					}
+				} else {
+					// Compare timezone names as strings
+					if result.Location().String() != loc.String() {
+						t.Errorf("expected location %v, got %v", loc, result.Location())
+					}
+				}
+			} else {
+				// Empty timezone should use UTC
+				if result.Location().String() != time.UTC.String() {
+					t.Errorf("expected UTC for empty timezone, got %v", result.Location())
+				}
 			}
 		})
 	}

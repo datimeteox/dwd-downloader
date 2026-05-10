@@ -2,7 +2,7 @@
 
 > **Scope:** Model configurations and timestamp logic
 > **Parent:** AGENTS.md
-> **Last updated:** 2025-01-07
+> **Last updated:** 2025-01-09
 
 ---
 
@@ -36,8 +36,8 @@ internal/models/
 | For | Reference | Key Patterns |
 |-----|-----------|--------------|
 | Model configuration | `models.json` | JSON with Model, Scope, Grids, Pattern, IntervalHours, OpenDataDeliveryOffsetMinutes |
-| Most recent timestamp | `models.go:GetMostRecentModelTimestamp` | Calculates based on interval and offset |
-| Timestamp parsing | `models.go:GetMostRecentTimestamp` | Handles interval and wait time |
+| Most recent timestamp | `models.go:GetMostRecentModelTimestamp` | Calculates based on interval, offset, and timezone |
+| Timestamp parsing | `models.go:GetMostRecentTimestamp` | Handles interval, wait time, and timezone |
 
 ---
 
@@ -55,8 +55,8 @@ internal/models/
 
 | Function | Purpose | Parameters |
 |----------|---------|------------|
-| `GetMostRecentTimestamp(intervalHours, offsetMinutes int) time.Time` | Calculates most recent timestamp | Interval, offset |
-| `GetMostRecentModelTimestamp(cfg ModelConfig) time.Time` | Gets most recent for specific model | Model config |
+| `GetMostRecentTimestamp(intervalHours, offsetMinutes int, timezone string) time.Time` | Calculates most recent timestamp | Interval, offset, timezone (defaults to UTC) |
+| `GetMostRecentModelTimestamp(cfg ModelConfig, timezone string) time.Time` | Gets most recent for specific model | Model config, timezone (defaults to UTC) |
 
 ---
 
@@ -113,10 +113,11 @@ internal/models/
 ## Boundaries
 
 ### Always
-- Use UTC for all timestamps
-- Handle DST correctly (use UTC)
+- Use UTC as default timezone for all timestamps
+- Handle DST correctly (use timezone-aware calculations)
 - Respect OpenDataDeliveryOffsetMinutes in calculations
 - Validate models.json structure on load
+- Fall back to UTC for invalid timezone strings
 
 ### Ask First
 - Adding new placeholder types to patterns
@@ -149,8 +150,8 @@ Currently configured models (from models.json):
 ### models.go
 - **Lines 1-20:** Package documentation and imports
 - **Lines 22-40:** Type definitions (ModelConfig, Pattern, Available)
-- **Lines 42-80:** `GetMostRecentTimestamp()` - Time calculation logic
-- **Lines 82-100:** `GetMostRecentModelTimestamp()` - Model-specific timestamp
+- **Lines 42-80:** `GetMostRecentTimestamp()` - Time calculation logic with timezone support
+- **Lines 82-100:** `GetMostRecentModelTimestamp()` - Model-specific timestamp with timezone support
 
 ### models.json
 - Root object with `Models` array
@@ -160,3 +161,4 @@ Currently configured models (from models.json):
 - **Lines 1-60:** `TestGetMostRecentTimestamp` - Various interval/offset combos
 - **Lines 62-120:** `TestGetMostRecentModelTimestamp` - Model-specific tests
 - **Lines 122-150:** `TestGetMostRecentTimestampWithFixedTime` - Fixed time tests
+- **Lines 185-250:** `TestGetMostRecentTimestampWithTimezone` - Timezone parameter tests

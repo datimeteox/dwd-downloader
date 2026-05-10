@@ -1,6 +1,6 @@
 # AGENTS.md for DWD Downloader (Go)
 
-> **Last updated:** 2025-01-07
+> **Last updated:** 2025-01-09
 > **Project:** github.com/deutscherwetterdienst/dwd-downloader-go
 > **Primary language:** Go
 > **Project type:** CLI application (urfave/cli/v2)
@@ -86,7 +86,7 @@
 | CLI command structure | `cmd/downloader/main.go` | Uses urfave/cli/v2, flag definitions, Action func |
 | URL construction | `cmd/downloader/main.go:getGribFileURL` | Pattern replacement, model run calculation |
 | Model configuration | `internal/models/models.json` | JSON config with pattern templates |
-| HTTP download | `cmd/downloader/main.go:downloadAndExtractBz2FileFromURL` | HTTP client, BZ2 decompression |
+| HTTP download | `cmd/downloader/main.go:downloadGribFile` | HTTP client, conditional BZ2 decompression |
 | Parallel downloads | `cmd/downloader/main.go:downloadGribData` | Goroutines, semaphore for concurrency control |
 
 ---
@@ -100,6 +100,8 @@
 | Format code | `make fmt` | Makefile |
 | Check code | `make check` | Makefile |
 | Download DWD data | `./bin/downloader --model icon-eu --single-level-fields t_2m` | CLI |
+| Download with unarchive | `./bin/downloader --model icon-eu --single-level-fields t_2m --unarchive` | CLI |
+| Download with timezone | `./bin/downloader --model icon-eu --single-level-fields t_2m --timezone Europe/Rome` | CLI |
 
 ---
 
@@ -110,8 +112,8 @@
 | Adding new model support | Add entry to `internal/models/models.json` |
 | Adding new CLI flag | Add to `main()` in `cmd/downloader/main.go` |
 | Adding URL pattern | Use existing placeholders: {model}, {param!L}, {param!U}, {grid}, {scope}, {levtype}, {modelrun:>02d}, {timestamp:%Y%m%d}, {step:>03d} |
-
-| Downloading files | Use `downloadAndExtractBz2FileFromURL` |
+| Downloading files | Use `downloadGribFile` with unarchive parameter |
+| Using UTC time | Always use `time.Now().UTC()` for consistent timezone handling |
 
 ---
 
@@ -119,21 +121,22 @@
 
 ### Always
 - Use existing pattern placeholders for URL construction
-
-- Handle BZ2 decompression in download function
+- Use `time.Now().UTC()` for all timestamp calculations to ensure timezone consistency
 - Use `urfave/cli/v2` for CLI flag definitions
 - Validate destination paths to prevent path traversal
+- Handle BZ2 decompression conditionally based on `--unarchive` flag
 
 ### Ask First
 - Adding new URL pattern placeholders (may affect existing models)
-
 - Modifying HTTP client timeout (currently 30s)
+- Changing default value of `--unarchive` flag
 
 ### Never
 - Hardcode model URLs (use patterns from models.json)
 - Commit bin/ or dist/ directories to git
 - Remove existing model configurations without replacement
 - Use global variables for HTTP client (use local instances)
+- Use local time without UTC conversion for model timestamps
 
 ---
 
@@ -144,6 +147,8 @@
 - **HTTP client:** Standard library net/http with 30s timeout
 - **Concurrency:** Goroutines with semaphore pattern for parallel downloads
 - **Model configurations:** JSON-based in internal/models/models.json
+- **Compression handling:** Optional BZ2 decompression via `--unarchive` flag (default: false)
+- **Timezone handling:** Configurable via `--timezone` flag, defaults to UTC
 - **Python version:** Separate implementation in python/ directory
 - **Build artifacts:** bin/ and dist/ are gitignored (generated)
 
@@ -159,6 +164,8 @@
 | Model run | The forecast cycle time (00, 03, 06, 09, 12, 18) |
 | Timestep | Forecast hour offset from model run |
 | Open Data | DWD's public data server at opendata.dwd.de |
+| BZ2 | BZip2 compression format used for DWD GRIB2 files |
+| Timezone | IANA timezone identifier (e.g., Europe/Rome, America/New_York) used for timestamp calculations |
 
 ---
 
